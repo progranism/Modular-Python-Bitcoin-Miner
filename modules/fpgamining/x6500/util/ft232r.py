@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import time
 import struct
 import threading
 from .jtag import JTAG
-import time
 
 class DeviceNotOpened(Exception): pass
 class NoAvailableDevices(Exception): pass
@@ -324,7 +324,9 @@ class FT232R_PyUSB:
             if manufacturer == "FPGA Mining LLC" and product == "X6500r3 FPGA Miner":
               if deviceid == "" or deviceid == serial:
                 try:
-                  if takeover: handle.reset()
+                  if takeover:
+                    handle.reset()
+                    time.sleep(1)
                   configuration = dev.configurations[0]
                   interface = configuration.interfaces[0][0]
                   handle.setConfiguration(configuration.value)

@@ -314,6 +314,7 @@ class X6500HotplugWorker(BaseWorker):
                     _serial = handle.getString(dev.iSerialNumber, 100).decode("latin1")
                     if manufacturer == "FPGA Mining LLC" and product == "X6500r3 FPGA Miner" and _serial == serial:
                       handle.reset()
+                      time.sleep(1)
                       configuration = dev.configurations[0]
                       interface = configuration.interfaces[0][0]
                       handle.setConfiguration(configuration.value)
@@ -321,6 +322,7 @@ class X6500HotplugWorker(BaseWorker):
                       handle.releaseInterface()
                       handle.setConfiguration(0)
                       handle.reset()
+                      time.sleep(1)
                       available = True
             except: pass
           if available:
