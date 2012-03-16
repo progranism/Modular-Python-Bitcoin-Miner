@@ -5,3 +5,4 @@ usb
 __pycache__
 worker/fpgamining/firmware/*
 config/*
+firmware/*
