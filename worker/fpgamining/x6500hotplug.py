@@ -158,7 +158,7 @@ class X6500HotplugWorker(object):
                   manufacturer = handle.getString(dev.iManufacturer, 100).decode("latin1")
                   product = handle.getString(dev.iProduct, 100).decode("latin1")
                   serial = handle.getString(dev.iSerialNumber, 100).decode("latin1")
-                  if manufacturer == "FTDI" and product == "FT232R USB UART":
+                  if (manufacturer == "FTDI" and product == "FT232R USB UART") or product == "X6500 FPGA Miner" or product == "X6500r3 FPGA Miner":
                     try:
                       configuration = dev.configurations[0]
                       interface = configuration.interfaces[0][0]
@@ -189,7 +189,7 @@ class X6500HotplugWorker(object):
                     manufacturer = handle.getString(dev.iManufacturer, 100).decode("latin1")
                     product = handle.getString(dev.iProduct, 100).decode("latin1")
                     serial = handle.getString(dev.iSerialNumber, 100).decode("latin1")
-                    if manufacturer == "FTDI" and product == "FT232R USB UART" and serial == deviceid:
+                    if ((manufacturer == "FTDI" and product == "FT232R USB UART") or product == "X6500 FPGA Miner" or product == "X6500r3 FPGA Miner") and serial == deviceid:
                       handle.reset()
                       configuration = dev.configurations[0]
                       interface = configuration.interfaces[0][0]

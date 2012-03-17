@@ -69,6 +69,8 @@
 #              failures until they have caught up with the configured priority.
 
 
+import inspect
+import platform
 import os
 import sys
 import time
@@ -328,6 +330,18 @@ if __name__ == "__main__":
   if os.path.isfile("config.py"): configfile = "config"
   if len(sys.argv) == 2 and sys.argv[1] != "": configfile = sys.argv[1]
   if configfile[-3:] == ".py": configfile = configfile[:-3]
+
+
+  # Resize the console on Windows so that it is big enough
+  if platform.system() == 'Windows':
+    os.system("mode 140,60")
+
+  # If we're running in a py2exe exe, fix the path
+  if hasattr(sys, "frozen") and sys.frozen in ("windows_exe", "console_exe"):
+    cmd_folder = os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])
+    if cmd_folder not in sys.path:
+      sys.path.insert(0, cmd_folder)
+
   exec("import " + configfile + " as config")
   miner = Miner(config)
   try:
