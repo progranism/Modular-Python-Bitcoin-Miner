@@ -36,6 +36,7 @@ import atexit
 import time
 import datetime
 
+
 class CursesUI(object):
   def __init__(self, miner, dict):
     self.__dict__ = dict
@@ -156,7 +157,7 @@ class CursesUI(object):
   def drawtable(self, y, columns, stats):
     for column in columns:
       self.mainwin.addstr(y, column["x"], column["title1"].center(column["width"]))
-      self.mainwin.addstr(y + 1, column["x"], column["title2"].center(column["width"]), curses.A_UNDERLINE)
+      self.mainwin.addstr(y + 1, column["x"], column["title2"].center(column["width"]))
       if column["x"] > 0: self.mainwin.vline(y, column["x"] - 1, curses.ACS_VLINE, len(stats) + 2)
       cy = y + 2
       last = cy + len(stats) - 1
@@ -165,12 +166,12 @@ class CursesUI(object):
         if data[2] == "r": text = data[0].rjust(column["width"])
         elif data[2] == "c": text = data[0].center(column["width"])
         else: text = data[0].ljust(column["width"])
-        attr = 0 if cy == last else curses.A_UNDERLINE
+        attr = 0
         if "r" in data[1]: attr = attr | self.red
         elif "y" in data[1]: attr = attr | self.yellow
         elif "g" in data[1]: attr = attr | self.green
         if "B" in data[1]: attr = attr | curses.A_BOLD
-        if "U" in data[1]: attr = attr | curses.A_UNDERLINE
+        if "U" in data[1]: attr = attr
         self.mainwin.addstr(cy, column["x"], text, attr)
         cy = cy + 1
 
@@ -297,7 +298,7 @@ class CursesUI(object):
     elif "y" in format: attr = self.yellow
     elif "g" in format: attr = self.green
     if "B" in format: attr = attr | curses.A_BOLD
-    if "U" in format: attr = attr | curses.A_UNDERLINE
+    if "U" in format: attr = attr
     for i in range(5):
       try:
         self.logwin.addstr(date)
