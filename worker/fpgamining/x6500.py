@@ -104,7 +104,7 @@ class X6500Worker(object):
     if self.clockspeed < 4:
       self.miner.log(self.name + ": ERROR: Clock speed set too low. Setting clock speed to the minimum (4 MHz).", "rB")
       self.clockspeed = 4
-    self.startingclock = self.clockspeed # the software 
+    self.startingclock = self.clockspeed
     
     self.invalidwarning = getattr(self, "invalidwarning", 1)
     self.invalidcritical = getattr(self, "invalidcritical", 10)
@@ -263,7 +263,7 @@ class X6500Worker(object):
       
   def setupstatslog(self):
     import datetime
-    datestring = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    datestring = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
     self.statslog = open('testing/' + self.name[6:] + '_' + datestring, "w")
     self.laststatsdump = 0
   
@@ -725,7 +725,7 @@ class X6500FPGA(object):
           self.fpga.sleep()
           raise Exception("FPGA critical state")
     
-    elif total > 100 and time.time() > self.starttime + 600 and invalid_pct < self.invalidwarning and self.temperature < self.tempwarning:
+    elif self.firmware_rev > 0 and total > 100 and time.time() > self.starttime + 600 and invalid_pct < self.invalidwarning/4 and self.temperature < self.tempwarning*0.9:
      # The FPGA is safe, and has been for some time, maybe we should increase the clock?
      # To be safe, don't increase the clock higher than the speed the user set in the config file
      newclock = min(self.clockspeed + 2, self.startingclock)
