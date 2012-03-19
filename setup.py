@@ -4,7 +4,8 @@ import py2exe
 setup(console=['miner.py'],
 		options={
 			"py2exe":{
-				"packages": ["frontend", "pool", "worker"]
+				"packages": ["frontend", "pool", "worker"],
+				"excludes": ["Tkconstants","Tkinter","tcl"]
 			}
 		})
 
