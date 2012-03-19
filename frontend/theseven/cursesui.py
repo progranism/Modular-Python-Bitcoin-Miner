@@ -36,6 +36,7 @@ import atexit
 import time
 import datetime
 
+
 class CursesUI(object):
   def __init__(self, miner, dict):
     self.__dict__ = dict
@@ -125,16 +126,30 @@ class CursesUI(object):
       except: invalidpercent = 0
       try: efficiency = worker["accepted"] / worker["mhashes"] * 429503.2833
       except: efficiency = 0
+      try: invalidwarning = worker['invalidwarning']
+      except: invalidwarning = 1
+      try: invalidcritical = worker['invalidcritical']
+      except: invalidcritical = 10
+      try: tempwarning = worker['tempwarning']
+      except: tempwarning = 40
+      try: tempcritical = worker['tempcritical']
+      except: tempcritical = 50
+      if invalidpercent > invalidcritical or ("temperature" in worker and worker['temperature'] != None and worker['temperature'] > tempcritical):
+        namecolor = "r" if len(worker["children"]) == 0 else ""
+      elif invalidpercent > invalidwarning or ("temperature" in worker and worker['temperature'] != None and worker['temperature'] > tempwarning):
+        namecolor = "y" if len(worker["children"]) == 0 else ""
+      else:
+        namecolor = ""
       workerstats.append({ \
-        "name": (" " * indent + worker["name"], bold, "l"), \
+        "name": (" " * indent + worker["name"], namecolor + bold, "l"), \
         "jobsaccepted": ("%d" % worker["jobsaccepted"], bold, "r"), \
         "accepted": ("%.0f" % worker["accepted"], bold, "r"), \
         "rejected": ("%.0f (%.1f%%)" % (worker["rejected"], stalepercent), "r" + bold if stalepercent > 5 else "g" + bold if stalepercent < 1 else "y" + bold, "r"), \
-        "invalid": ("%.0f (%.1f%%)" % (worker["invalid"], invalidpercent), "r" + bold if invalidpercent > 5 else "g" + bold if invalidpercent < 1 else "y" + bold, "r"), \
+        "invalid": ("%.0f (%.1f%%)" % (worker["invalid"], invalidpercent), "r" + bold if invalidpercent > invalidcritical else "g" + bold if invalidpercent < invalidwarning else "y" + bold, "r"), \
         "mhps": ("%.2f" % worker["mhps"], bold, "r"), \
         "avgmhps": ("%.2f" % (worker["mhashes"] / uptime), bold, "r"), \
         "efficiency": ("%.1f%%" % efficiency, "r" + bold if efficiency < 80 else "g" + bold if efficiency > 95 else "y" + bold, "r"), \
-        "temperature": ("%.1f" % worker["temperature"], "r" + bold if worker["temperature"] > 60 else "y" + bold if worker["temperature"] > 50 else "g" + bold, "c") if "temperature" in worker and worker["temperature"] != None else ("Unknown", bold, "c"), \
+        "temperature": ("%.1f" % worker["temperature"], "r" + bold if worker["temperature"] > tempcritical else "y" + bold if worker["temperature"] > tempwarning else "g" + bold, "c") if "temperature" in worker and worker["temperature"] != None else ("", bold, "c"), \
         "currentpool": (worker["currentpool"] if "currentpool" in worker and worker["currentpool"] != None else "Unknown", bold, "c"), \
       })
       self.translateworkerdata(worker["children"], workerstats, indent + 2)
@@ -142,7 +157,7 @@ class CursesUI(object):
   def drawtable(self, y, columns, stats):
     for column in columns:
       self.mainwin.addstr(y, column["x"], column["title1"].center(column["width"]))
-      self.mainwin.addstr(y + 1, column["x"], column["title2"].center(column["width"]), curses.A_UNDERLINE)
+      self.mainwin.addstr(y + 1, column["x"], column["title2"].center(column["width"]))
       if column["x"] > 0: self.mainwin.vline(y, column["x"] - 1, curses.ACS_VLINE, len(stats) + 2)
       cy = y + 2
       last = cy + len(stats) - 1
@@ -151,12 +166,12 @@ class CursesUI(object):
         if data[2] == "r": text = data[0].rjust(column["width"])
         elif data[2] == "c": text = data[0].center(column["width"])
         else: text = data[0].ljust(column["width"])
-        attr = 0 if cy == last else curses.A_UNDERLINE
+        attr = 0
         if "r" in data[1]: attr = attr | self.red
         elif "y" in data[1]: attr = attr | self.yellow
         elif "g" in data[1]: attr = attr | self.green
         if "B" in data[1]: attr = attr | curses.A_BOLD
-        if "U" in data[1]: attr = attr | curses.A_UNDERLINE
+        if "U" in data[1]: attr = attr
         self.mainwin.addstr(cy, column["x"], text, attr)
         cy = cy + 1
 
@@ -175,23 +190,23 @@ class CursesUI(object):
         width = max(4, self.calculatemaxfieldlen(poolstats, "longpolling"))
         poolcolumns.append({"title1": "Long", "title2": "poll", "field": "longpolling", "x": x, "width": width})
         x = x + 1 + width
-        width = max(10, self.calculatemaxfieldlen(poolstats, "difficulty"))
-        poolcolumns.append({"title1": "", "title2": "Difficulty", "field": "difficulty", "x": x, "width": width})
+        width = max(5, self.calculatemaxfieldlen(poolstats, "difficulty"))
+        poolcolumns.append({"title1": "", "title2": "Diff.", "field": "difficulty", "x": x, "width": width})
         x = x + 1 + width
         width = max(8, self.calculatemaxfieldlen(poolstats, "requests"))
         poolcolumns.append({"title1": "Job", "title2": "requests", "field": "requests", "x": x, "width": width})
         x = x + 1 + width
-        width = max(12, self.calculatemaxfieldlen(poolstats, "failedreqs"))
-        poolcolumns.append({"title1": "Failed", "title2": "job requests", "field": "failedreqs", "x": x, "width": width})
+        width = max(10, self.calculatemaxfieldlen(poolstats, "failedreqs"))
+        poolcolumns.append({"title1": "Failed job", "title2": "requests", "field": "failedreqs", "x": x, "width": width})
         x = x + 1 + width
-        width = max(8, self.calculatemaxfieldlen(poolstats, "jobsaccepted"))
-        poolcolumns.append({"title1": "Accepted", "title2": "jobs", "field": "jobsaccepted", "x": x, "width": width})
+        width = max(4, self.calculatemaxfieldlen(poolstats, "jobsaccepted"))
+        poolcolumns.append({"title1": "Acc.", "title2": "jobs", "field": "jobsaccepted", "x": x, "width": width})
         x = x + 1 + width
-        width = max(8, self.calculatemaxfieldlen(poolstats, "longpollkilled"))
-        poolcolumns.append({"title1": "Rejected", "title2": "jobs", "field": "longpollkilled", "x": x, "width": width})
+        width = max(4, self.calculatemaxfieldlen(poolstats, "longpollkilled"))
+        poolcolumns.append({"title1": "Rej.", "title2": "jobs", "field": "longpollkilled", "x": x, "width": width})
         x = x + 1 + width
-        width = max(8, self.calculatemaxfieldlen(poolstats, "accepted"))
-        poolcolumns.append({"title1": "Accepted", "title2": "shares", "field": "accepted", "x": x, "width": width})
+        width = max(6, self.calculatemaxfieldlen(poolstats, "accepted"))
+        poolcolumns.append({"title1": "Acc.", "title2": "shares", "field": "accepted", "x": x, "width": width})
         x = x + 1 + width
         width = max(12, self.calculatemaxfieldlen(poolstats, "rejected"))
         poolcolumns.append({"title1": "Stale shares", "title2": "(rejected)", "field": "rejected", "x": x, "width": width})
@@ -214,17 +229,17 @@ class CursesUI(object):
         width = max(6, self.calculatemaxfieldlen(workerstats, "name", 2))
         workercolumns.append({"title1": "Worker", "title2": "name", "field": "name", "x": x, "width": width})
         x = x + 1 + width
-        width = max(8, self.calculatemaxfieldlen(workerstats, "jobsaccepted"))
-        workercolumns.append({"title1": "Accepted", "title2": "jobs", "field": "jobsaccepted", "x": x, "width": width})
+        width = max(4, self.calculatemaxfieldlen(workerstats, "jobsaccepted"))
+        workercolumns.append({"title1": "Acc.", "title2": "jobs", "field": "jobsaccepted", "x": x, "width": width})
         x = x + 1 + width
-        width = max(8, self.calculatemaxfieldlen(workerstats, "accepted"))
-        workercolumns.append({"title1": "Accepted", "title2": "shares", "field": "accepted", "x": x, "width": width})
+        width = max(6, self.calculatemaxfieldlen(workerstats, "accepted"))
+        workercolumns.append({"title1": "Acc.", "title2": "shares", "field": "accepted", "x": x, "width": width})
         x = x + 1 + width
-        width = max(12, self.calculatemaxfieldlen(workerstats, "rejected"))
-        workercolumns.append({"title1": "Stale shares", "title2": "(rejected)", "field": "rejected", "x": x, "width": width})
+        width = max(10, self.calculatemaxfieldlen(workerstats, "rejected"))
+        workercolumns.append({"title1": "Stales", "title2": "(rejected)", "field": "rejected", "x": x, "width": width})
         x = x + 1 + width
-        width = max(14, self.calculatemaxfieldlen(workerstats, "invalid"))
-        workercolumns.append({"title1": "Invalid shares", "title2": "(K not zero)", "field": "invalid", "x": x, "width": width})
+        width = max(12, self.calculatemaxfieldlen(workerstats, "invalid"))
+        workercolumns.append({"title1": "Invalids", "title2": "(K not zero)", "field": "invalid", "x": x, "width": width})
         x = x + 1 + width
         width = max(7, self.calculatemaxfieldlen(workerstats, "mhps"))
         workercolumns.append({"title1": "Current", "title2": "MHash/s", "field": "mhps", "x": x, "width": width})
@@ -232,8 +247,8 @@ class CursesUI(object):
         width = max(7, self.calculatemaxfieldlen(workerstats, "avgmhps"))
         workercolumns.append({"title1": "Average", "title2": "MHash/s", "field": "avgmhps", "x": x, "width": width})
         x = x + 1 + width
-        width = max(11, self.calculatemaxfieldlen(workerstats, "temperature"))
-        workercolumns.append({"title1": "Temperature", "title2": "(degrees C)", "field": "temperature", "x": x, "width": width})
+        width = max(7, self.calculatemaxfieldlen(workerstats, "temperature"))
+        workercolumns.append({"title1": "Temp.", "title2": "(deg C)", "field": "temperature", "x": x, "width": width})
         x = x + 1 + width
         width = max(6, self.calculatemaxfieldlen(workerstats, "efficiency"))
         workercolumns.append({"title1": "Effi-", "title2": "ciency", "field": "efficiency", "x": x, "width": width})
@@ -283,7 +298,7 @@ class CursesUI(object):
     elif "y" in format: attr = self.yellow
     elif "g" in format: attr = self.green
     if "B" in format: attr = attr | curses.A_BOLD
-    if "U" in format: attr = attr | curses.A_UNDERLINE
+    if "U" in format: attr = attr
     for i in range(5):
       try:
         self.logwin.addstr(date)
