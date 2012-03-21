@@ -321,7 +321,7 @@ class FT232R_PyUSB:
             manufacturer = handle.getString(dev.iManufacturer, 100).decode("latin1")
             product = handle.getString(dev.iProduct, 100).decode("latin1")
             serial = handle.getString(dev.iSerialNumber, 100).decode("latin1")
-            if manufacturer == "FPGA Mining LLC" and product == "X6500r3 FPGA Miner":
+            if (manufacturer == "FTDI" and product == "FT232R USB UART") or (manufacturer == "FPGA Mining LLC" and product == "X6500 FPGA Miner") or (manufacturer == "FPGA Mining LLC" and product == "X6500r3 FPGA Miner"):
               if deviceid == "" or deviceid == serial:
                 try:
                   if takeover:

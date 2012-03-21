@@ -80,7 +80,7 @@ class Job(object):
     
   def set_worker(self, worker):
     self.worker = worker
-    self.core.log("Mining %s:%s on %s\n" % (self.worksource.settings.name, hexlify(self.data[:76]), worker.settings.name), 400)
+    self.core.log("Mining %s:%s on %s\n" % (self.worksource.settings.name, hexlify(self.data[:76]).decode("ascii"), worker.settings.name), 400)
     with self.worker.stats.lock: self.worker.stats.jobsaccepted += 1
     with self.worksource.stats.lock: self.worksource.stats.jobsaccepted += 1
     
@@ -118,7 +118,7 @@ class Job(object):
     self.canceled = True
     if self.worker:
       try: self.worker.notify_canceled(self)
-      except: self.core.log("Exception while cancelling job of worker %s: %s" % (self.worker.settings.name, traceback.format_exc()), 100, "r")
+      except: self.core.log("Exception while canceling job of worker %s: %s" % (self.worker.settings.name, traceback.format_exc()), 100, "r")
       with self.worker.stats.lock: self.worker.stats.jobscanceled += 1
       with self.worksource.stats.lock: self.worksource.stats.jobscanceled += 1
       
