@@ -49,7 +49,7 @@ import hashlib
 import struct
 import atexit
 from .util.ft232r import FT232R, FT232R_PyUSB, FT232R_D2XX, FT232R_PortList
-from .util.jtag import JTAG
+from .util.jtag import JTAG, NoDevicesDetected
 from .util.BitstreamReader import BitFile, BitFileReadError
 from .util.fpga import FPGA
 from .util.format import formatNumber, formatTime
@@ -191,7 +191,11 @@ class X6500Worker(object):
       for id, fpga in enumerate(fpga_list):
         fpga.id = id
         self.miner.log(self.name + ": Discovering FPGA %d...\n" % id)
-        fpga.detect()
+	try:
+          fpga.detect()
+	except NoDevicesDetected as e:
+	  fpga.id = None
+	  continue
         #self.miner.log(self.name + ": Found %i device%s\n" % (fpga.jtag.deviceCount, 's' if fpga.jtag.deviceCount != 1 else ''))
         for idcode in fpga.jtag.idcodes:
           self.miner.log(self.name + ": FPGA %d: %s - Firmware: rev %d, build %d\n" % (id, JTAG.decodeIdcode(idcode), fpga.firmware_rev, fpga.firmware_build))
@@ -199,6 +203,9 @@ class X6500Worker(object):
           self.miner.log(self.name + ": Warning: This module needs two JTAG buses with one FPGA each!\n", "rB")
           self.dead = True
           return
+      
+      if fpga_list[0].id is None:
+        fpga_list = [fpga_list[1]]
 
       if self.uploadfirmware:
         self.miner.log(self.name + ": Programming FPGAs...\n")
@@ -237,7 +244,8 @@ class X6500Worker(object):
       self.starttime = time.time()
       
       self.children.append(X6500FPGA(self.miner, self, fpga_list[0]))
-      self.children.append(X6500FPGA(self.miner, self, fpga_list[1]))
+      if len(fpga_list) > 1:
+        self.children.append(X6500FPGA(self.miner, self, fpga_list[1]))
     except Exception as e:
       import traceback
       self.miner.log(self.name + ": Error while booting board: %s\n" % traceback.format_exc(), "rB")
